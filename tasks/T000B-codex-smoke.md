@@ -2,7 +2,7 @@
 id: T000B
 title: Codex 冒烟测试
 executor: codex
-status: doing
+status: failed
 depends:
 workspace: app
 started: 2026-11-03 18:01
