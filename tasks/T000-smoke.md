@@ -2,10 +2,10 @@
 id: T000
 title: 冒烟测试
 executor: dsh
-status: failed
+status: doing
 depends:
 workspace: app
-started: 2026-11-03 17:29
+started: 2026-11-03 17:42
 ---
 ## 目标
 验证分发链路可用。
