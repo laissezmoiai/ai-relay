@@ -181,6 +181,15 @@ def run_task(t, dry=False):
     sh(["git", "checkout", branch] if exists else ["git", "checkout", "-b", branch], cwd=ws)
     print(f"执行 {tid} -> {ex} ...")
     out, code = execute(cmd, ws, ex)
+    fb = CFG.get("fallback", {}).get(ex)
+    if code != 0 and fb and fb in CFG["executors"] and any(k in out.lower() for k in TRANSIENT):
+        print(f"  {ex} 不可用，改由 {fb} 执行 ...")
+        sh(["git", "checkout", "--", "."], cwd=ws, check=False)
+        sh(["git", "clean", "-fd"], cwd=ws, check=False)
+        cmd2 = [a.replace("{prompt}", build_prompt(t)) for a in CFG["executors"][fb]["cmd"]]
+        out2, code = execute(cmd2, ws, fb)
+        out += f"\n===== 回退到 {fb} =====\n" + out2
+        ex = fb
     LOGS.mkdir(exist_ok=True)
     (LOGS / f"{tid}.log").write_text(out, encoding="utf-8")
 

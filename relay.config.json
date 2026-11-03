@@ -2,7 +2,9 @@
   "raw_base": "https://raw.githubusercontent.com/laissezmoiai/ai-relay/main/",
   "base_branch": "main",
   "default_workspace": "app",
-  "workspaces": { "app": "/Users/laissezmoi/ai/app" },
+  "workspaces": {
+    "app": "/Users/laissezmoi/ai/app"
+  },
   "auto_push": true,
   "poll_interval_sec": 60,
   "max_diff_chars": 20000,
@@ -13,7 +15,38 @@
     "(?i)(api[_-]?key|secret|password|token)\\s*[:=]\\s*\\S+"
   ],
   "executors": {
-    "codex": { "cmd": ["codex", "exec", "--sandbox", "workspace-write", "{prompt}"], "timeout_sec": 3600 },
-    "dsh":   { "cmd": ["npx", "-y", "@deepseek-ai/dsh", "--profile", "headless", "{prompt}"], "timeout_sec": 3600 }
-  }
+    "codex": {
+      "cmd": [
+        "codex",
+        "exec",
+        "-m",
+        "gpt-6.1-sol",
+        "-c",
+        "model_reasoning_effort=medium",
+        "--sandbox",
+        "workspace-write",
+        "{prompt}"
+      ],
+      "timeout_sec": 3600
+    },
+    "dsh": {
+      "cmd": [
+        "npx",
+        "-y",
+        "@deepseek-ai/dsh",
+        "--profile",
+        "headless",
+        "{prompt}"
+      ],
+      "timeout_sec": 3600
+    }
+  },
+  "fallback": {
+    "codex": "dsh",
+    "dsh": "codex"
+  },
+  "retry_delays_sec": [
+    30,
+    90
+  ]
 }

@@ -2,7 +2,7 @@
 id: T000
 title: 冒烟测试
 executor: dsh
-status: review
+status: approved
 depends:
 workspace: app
 started: 2026-11-03 18:00
