@@ -138,6 +138,31 @@ def write_status():
     (ROOT / "STATUS.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+TRANSIENT = ("stream_closed", "at capacity", "rate limit", "too many requests",
+             "overloaded", "service unavailable", "bad gateway", "econnreset", "etimedout")
+
+
+def execute(cmd, ws, ex):
+    delays = CFG.get("retry_delays_sec", [30, 90, 180])
+    logs, code = [], -1
+    for attempt in range(len(delays) + 1):
+        try:
+            r = subprocess.run(cmd, cwd=ws, capture_output=True, text=True,
+                               timeout=CFG["executors"][ex].get("timeout_sec", 3600))
+            out, code = (r.stderr or "") + "\n" + (r.stdout or ""), r.returncode
+        except subprocess.TimeoutExpired:
+            out, code = "执行超时", -1
+        except FileNotFoundError as e:
+            return f"找不到执行器命令: {e}", -2
+        logs.append(f"===== 第 {attempt + 1} 次尝试，退出码 {code} =====\n{out}")
+        low = out.lower()
+        if code == 0 or attempt == len(delays) or not any(k in low for k in TRANSIENT):
+            break
+        print(f"  临时错误，{delays[attempt]} 秒后重试（第 {attempt + 2} 次）...")
+        time.sleep(delays[attempt])
+    return "\n".join(logs), code
+
+
 def run_task(t, dry=False):
     tid, ex = t["id"], t["executor"].lower()
     ws, base = workspace(t), CFG["base_branch"]
@@ -155,14 +180,7 @@ def run_task(t, dry=False):
     exists = sh(["git", "rev-parse", "--verify", branch], cwd=ws, check=False).returncode == 0
     sh(["git", "checkout", branch] if exists else ["git", "checkout", "-b", branch], cwd=ws)
     print(f"执行 {tid} -> {ex} ...")
-    try:
-        r = subprocess.run(cmd, cwd=ws, capture_output=True, text=True,
-                           timeout=CFG["executors"][ex].get("timeout_sec", 3600))
-        out, code = (r.stderr or "") + "\n" + (r.stdout or ""), r.returncode
-    except subprocess.TimeoutExpired:
-        out, code = "执行超时", -1
-    except FileNotFoundError as e:
-        out, code = f"找不到执行器命令: {e}", -2
+    out, code = execute(cmd, ws, ex)
     LOGS.mkdir(exist_ok=True)
     (LOGS / f"{tid}.log").write_text(out, encoding="utf-8")
 
@@ -172,7 +190,7 @@ def run_task(t, dry=False):
     diff = sh(["git", "diff", f"{base}...{branch}"], cwd=ws, check=False).stdout
     sh(["git", "checkout", base], cwd=ws)
 
-    found = REPORT_RE.findall(out)
+    found = [x for x in REPORT_RE.findall(out) if "改动文件: ...\n做了什么: ..." not in x]
     selfrep = found[-1].strip() if found else "（执行者未按格式输出报告）"
     limit = CFG.get("max_diff_chars", 20000)
     if len(diff) > limit:
