@@ -2,10 +2,10 @@
 id: T000B
 title: Codex 冒烟测试
 executor: codex
-status: failed
+status: doing
 depends:
 workspace: app
-started: 2026-11-03 18:01
+started: 2026-11-03 18:33
 ---
 ## 目标
 验证分发链路可用。
