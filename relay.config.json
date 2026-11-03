@@ -1,0 +1,19 @@
+{
+  "raw_base": "https://raw.githubusercontent.com/laissezmoiai/ai-relay/main/",
+  "base_branch": "main",
+  "default_workspace": "app",
+  "workspaces": { "app": "/Users/laissezmoi/ai/app" },
+  "auto_push": true,
+  "poll_interval_sec": 60,
+  "max_diff_chars": 20000,
+  "redact_patterns": [
+    "sk-[A-Za-z0-9_-]{20,}",
+    "ghp_[A-Za-z0-9]{30,}",
+    "gho_[A-Za-z0-9]{30,}",
+    "(?i)(api[_-]?key|secret|password|token)\\s*[:=]\\s*\\S+"
+  ],
+  "executors": {
+    "codex": { "cmd": ["codex", "exec", "--sandbox", "workspace-write", "{prompt}"], "timeout_sec": 3600 },
+    "dsh":   { "cmd": ["npx", "-y", "@deepseek-ai/dsh", "--profile", "headless", "{prompt}"], "timeout_sec": 3600 }
+  }
+}
