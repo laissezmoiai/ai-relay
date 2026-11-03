@@ -2,7 +2,7 @@
 id: T000
 title: 冒烟测试
 executor: dsh
-status: doing
+status: failed
 depends:
 workspace: app
 started: 2026-11-03 17:29
